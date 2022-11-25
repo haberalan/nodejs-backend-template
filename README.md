@@ -11,14 +11,17 @@ Backend with simple user authentication.
 
 ## Installation
 
+Remember to create your own MONGO_URI in ./backend-nodejs-template/.env
+
 ```
 git clone git@github.com:haberalan/backend-nodejs-template.git
+```
+```
 cd backend-nodejs-template
+```
+```
 npm install
 ```
-
-Create ".env" file and insert there your MONGO_URI as in ".env-example".
-
 ```
 npm run dev
 ```
