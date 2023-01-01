@@ -7,7 +7,7 @@ require('dotenv').config();
 // Create app
 const app = express();
 
-// Improted routes
+// Imported routes
 const userRoutes = require('./routes/userRoutes');
 
 // Middlewares
