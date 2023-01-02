@@ -7,6 +7,7 @@ Backend with simple user authentication.
 - NodeJS
 - Express
 - JWT
+- Multer
 - Mongodb
 
 ## Installation
