@@ -26,9 +26,40 @@ const userSchema = new Schema(
       maxLength: 100,
       required: true,
     },
+    avatar: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
   },
   { timestamps: true }
 );
+
+userSchema.statics.login = async function (username, password) {
+  if (!username || !password) {
+    throw Error('All fields must be filled!');
+  }
+
+  const enteredUsername = username.trim().toLowerCase();
+
+  if (!enteredUsername) {
+    throw Error('All fields must be filled!');
+  }
+
+  const user = await this.findOne({ username: enteredUsername });
+
+  if (!user) {
+    throw Error('Incorrect username!');
+  }
+
+  const passwordsMatch = await bcrypt.compare(password, user.password);
+
+  if (!passwordsMatch) {
+    throw Error('Incorrect password!');
+  }
+
+  return user;
+};
 
 userSchema.statics.signup = async function (username, email, password) {
   if (!username || !email || !password) {
@@ -74,33 +105,19 @@ userSchema.statics.signup = async function (username, email, password) {
   return user;
 };
 
-userSchema.statics.login = async function (username, password) {
-  if (!username || !password) {
-    throw Error('All fields must be filled!');
-  }
-
-  const enteredUsername = username.trim().toLowerCase();
-
-  if (!enteredUsername) {
-    throw Error('All fields must be filled!');
-  }
-
-  const user = await this.findOne({ username: enteredUsername });
+userSchema.statics.updateAvatar = async function (user_id) {
+  const user = await this.findById(user_id);
 
   if (!user) {
-    throw Error('Incorrect username!');
+    throw Error('There was an error!');
   }
 
-  const passwordsMatch = await bcrypt.compare(password, user.password);
+  const updatedUser = await this.findByIdAndUpdate(user_id, { avatar: true });
 
-  if (!passwordsMatch) {
-    throw Error('Incorrect password!');
-  }
-
-  return user;
+  return updatedUser;
 };
 
-userSchema.statics.updateData = async function (user_id, password, newPassword) {
+userSchema.statics.updatePassword = async function (user_id, password, newPassword) {
   if (!password || !newPassword) {
     throw Error('All fields must be filled!');
   }

@@ -7,9 +7,6 @@ require('dotenv').config();
 // Create app
 const app = express();
 
-// Imported routes
-const userRoutes = require('./routes/userRoutes');
-
 // Middlewares
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -22,6 +19,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+const userRoutes = require('./routes/userRoutes');
 app.use('/api/user', userRoutes);
 
 // Route error handler
@@ -30,6 +28,7 @@ app.use((req, res) => {
 });
 
 // Connection to db and starting server
+mongoose.set('strictQuery', false);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
