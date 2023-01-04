@@ -29,9 +29,11 @@ const userSchema = new Schema(
     avatar: {
       required: false,
       data: {
+        required: false,
         type: Buffer,
       },
       type: {
+        required: false,
         type: String,
       },
     },
