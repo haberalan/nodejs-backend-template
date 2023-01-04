@@ -27,13 +27,12 @@ const userSchema = new Schema(
       required: true,
     },
     avatar: {
+      required: false,
       data: {
         type: Buffer,
-        required: true,
       },
       type: {
         type: String,
-        required: true,
       },
     },
   },
