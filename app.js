@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 // Create app
@@ -32,6 +34,12 @@ mongoose.set('strictQuery', false);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
+    const dir = path.join(__dirname, './public/avatars');
+
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
     app.listen(process.env.PORT, () => {
       console.log(`Successfully connected to database. Server is listening on port ${process.env.PORT}.`);
     });
