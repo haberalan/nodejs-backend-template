@@ -27,9 +27,14 @@ const userSchema = new Schema(
       required: true,
     },
     avatar: {
-      type: Boolean,
-      default: false,
-      required: true,
+      data: {
+        type: Buffer,
+        required: true,
+      },
+      type: {
+        type: String,
+        required: true,
+      },
     },
   },
   { timestamps: true }
@@ -105,14 +110,14 @@ userSchema.statics.signup = async function (username, email, password) {
   return user;
 };
 
-userSchema.statics.updateAvatar = async function (user_id) {
+userSchema.statics.updateAvatar = async function (user_id, image) {
   const user = await this.findById(user_id);
 
   if (!user) {
     throw Error('There was an error!');
   }
 
-  const updatedUser = await this.findByIdAndUpdate(user_id, { avatar: true });
+  const updatedUser = await this.findByIdAndUpdate(user_id, { avatar: image });
 
   return updatedUser;
 };
@@ -153,20 +158,10 @@ userSchema.statics.updatePassword = async function (user_id, password, newPasswo
 };
 
 userSchema.statics.deleteUser = async function (user_id, password) {
-  if (!password) {
-    throw Error('All fields must be filled!');
-  }
-
   const user = await this.findById(user_id);
 
   if (!user) {
     throw Error('There was an error!');
-  }
-
-  const passwordsMatch = await bcrypt.compare(password, user.password);
-
-  if (!passwordsMatch) {
-    throw Error('Incorrect password!');
   }
 
   const deletedUser = await this.findByIdAndDelete(user_id);

@@ -4,23 +4,25 @@ const multer = require('multer');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const { Buffer } = require('buffer');
 
 const createToken = (_id, expiresIn) => {
   return jwt.sign({ _id }, process.env.SECRET, expiresIn && { expiresIn });
 };
 
 const login = async (req, res) => {
-  const { username, password, remember } = req.body;
+  const { username, password, expiresIn } = req.body;
 
   try {
     const user = await User.login(username, password);
 
-    const token = createToken(user._id, !remember && '24h');
+    const token = createToken(user._id, !expiresIn && '24h');
 
     res.status(200).json({
+      _id: user._id,
       username: user.username,
       email: user.email,
-      lastUpdated: user.updatedAt,
+      updatedAt: user.updatedAt,
       token,
     });
   } catch (err) {
@@ -29,17 +31,18 @@ const login = async (req, res) => {
 };
 
 const signup = async (req, res) => {
-  const { username, email, password, remember } = req.body;
+  const { username, email, password, expiresIn } = req.body;
 
   try {
     const user = await User.signup(username, email, password);
 
-    const token = createToken(user._id, !remember && '24h');
+    const token = createToken(user._id, !expiresIn && '24h');
 
     res.status(200).json({
+      _id: user._id,
       username: user.username,
       email: user.email,
-      lastUpdated: user.updatedAt,
+      updatedAt: user.updatedAt,
       token,
     });
   } catch (err) {
@@ -55,8 +58,28 @@ const getAvatar = async (req, res) => {
   if (fs.existsSync(avatar)) {
     res.sendFile(avatar);
   } else {
-    res.json({ error: 'There is no such avatar.' });
+    try {
+      const user = await User.findById(id);
+
+      const dataBSON = JSON.stringify(user.avatar);
+
+      const dataJSON = JSON.parse(dataBSON);
+
+      const dataBuffer = Buffer.from(dataJSON.buffer.data);
+
+      fs.writeFileSync(avatar, dataBuffer);
+
+      res.sendFile(avatar);
+    } catch (err) {
+      res.status(400).json({ error: 'There was an error' });
+    }
   }
+};
+
+const authorize = async (req, res) => {
+  const { username } = req.user;
+
+  res.status(200).json({ username });
 };
 
 const storage = multer.diskStorage({
@@ -89,9 +112,11 @@ const updateAvatar = [
 
     try {
       await sharp(req.file.path).resize(200, 200).png({ quality: 100 }).toFile(path.resolve(req.file.destination, 'avatars', req.file.filename));
-      fs.unlinkSync(req.file.path);
+      await fs.unlinkSync(req.file.path);
 
-      const user = await User.updateAvatar(user_id);
+      const avatar = Buffer.from(fs.readFileSync(path.join(__dirname, '../public/avatars/', user_id + '.png')));
+
+      const user = await User.updateAvatar(user_id, avatar);
 
       res.status(200).json({ username: user.username });
     } catch (err) {
@@ -115,10 +140,11 @@ const updatePassword = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   const user_id = req.user._id;
-  const { password } = req.body;
 
   try {
-    const user = await User.deleteUser(user_id, password);
+    const user = await User.deleteUser(user_id);
+
+    if (user.avatar) fs.unlinkSync(path.join(__dirname, '../public/avatars/', user_id + '.png'));
 
     // delete all data associated with user
 
@@ -128,4 +154,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { login, signup, getAvatar, updateAvatar, updatePassword, deleteUser };
+module.exports = { login, signup, getAvatar, authorize, updateAvatar, updatePassword, deleteUser };
