@@ -1,9 +1,9 @@
 const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
-const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 const { Buffer } = require('buffer');
 
 const createToken = (_id, expiresIn) => {
@@ -55,7 +55,7 @@ const getAvatar = async (req, res) => {
 
   const avatar = path.join(__dirname, '../public/avatars/', id + '.png');
 
-  if (fs.existsSync(avatar)) {
+  if (await fs.existsSync(avatar)) {
     res.sendFile(avatar);
   } else {
     try {
@@ -65,9 +65,9 @@ const getAvatar = async (req, res) => {
 
       const dataJSON = JSON.parse(dataBSON);
 
-      const dataBuffer = Buffer.from(dataJSON.buffer.data);
+      const dataBuffer = await Buffer.from(dataJSON.buffer.data);
 
-      fs.writeFileSync(avatar, dataBuffer);
+      await fs.writeFileSync(avatar, dataBuffer);
 
       res.sendFile(avatar);
     } catch (err) {
@@ -82,25 +82,15 @@ const authorize = async (req, res) => {
   res.status(200).json({ username });
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/');
-  },
-  filename: (req, file, cb) => {
-    const user_id = req.user._id;
-    const fileName = user_id.toString() + '.png';
-    cb(null, fileName);
-  },
-});
+const storage = multer.memoryStorage();
 
 const upload = multer({
-  storage: storage,
+  storage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype == 'image/png' || file.mimetype == 'image/jpg' || file.mimetype == 'image/jpeg') {
+    if (file.mimetype.split('/')[0] === 'image') {
       cb(null, true);
     } else {
-      cb(null, false);
-      return cb(new Error('Only .png, .jpg and .jpeg format allowed!'));
+      cb(new Error('Only images are allowed!'));
     }
   },
 });
@@ -110,16 +100,19 @@ const updateAvatar = [
   async (req, res) => {
     const user_id = req.user._id;
 
-    try {
-      await sharp(req.file.path).resize(200, 200).png({ quality: 100 }).toFile(path.resolve(req.file.destination, 'avatars', req.file.filename));
-      await fs.unlinkSync(req.file.path);
+    await sharp(req.file.buffer)
+      .resize(200, 200)
+      .png({ quality: 100 })
+      .toFile(path.join(__dirname, '../public/avatars/', user_id + '.png'));
 
-      const avatar = Buffer.from(fs.readFileSync(path.join(__dirname, '../public/avatars/', user_id + '.png')));
+    try {
+      const avatar = await Buffer.from(fs.readFileSync(path.join(__dirname, '../public/avatars/', user_id + '.png')));
 
       const user = await User.updateAvatar(user_id, avatar);
 
       res.status(200).json({ username: user.username });
     } catch (err) {
+      console.log(err);
       res.status(400).json({ error: 'There was an error.' });
     }
   },

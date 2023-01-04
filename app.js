@@ -2,8 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 // Create app
@@ -38,6 +38,7 @@ mongoose
 
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
+      console.log('Created directories.');
     }
 
     app.listen(process.env.PORT, () => {

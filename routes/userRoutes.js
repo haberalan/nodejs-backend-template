@@ -13,6 +13,8 @@ router.get('/avatar/:id', userController.getAvatar);
 
 router.use(isAuthorized);
 
+router.get('/authorize', userController.authorize);
+
 router.patch('/avatar', userController.updateAvatar);
 
 router.patch('/update', userController.updatePassword);
