@@ -61,9 +61,9 @@ const getAvatar = async (req, res) => {
     try {
       const user = await User.findById(id);
 
-      const dataBSON = JSON.stringify(user.avatar);
+      const dataBSON = await JSON.stringify(user.avatar);
 
-      const dataJSON = JSON.parse(dataBSON);
+      const dataJSON = await JSON.parse(dataBSON);
 
       const dataBuffer = await Buffer.from(dataJSON.buffer.data);
 
